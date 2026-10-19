@@ -114,7 +114,7 @@ export class NavigationSheet {
   private tryParseLine(line: string): NavigationTurn | void {
     line = line.trim().toLowerCase();
     if (line == "") return;
-    const regexTest = /(up|down|forward)\s(-?\d+)/;
+    const regexTest = /^(up|down|forward)\s(-?\d+)$/;
 
     if (!regexTest.test(line)) {
       throw new Error(`Invalid line: ${line}`);
@@ -155,16 +155,16 @@ export class NavigationSheet {
   }
 }
 
-function processFile(filename: string): string[] {
+function processFile(filename: string): string[] | null {
   let lines: string[] = [];
 
   try {
     const data = fs.readFileSync(filename, "utf8");
     lines = data.split(/\r?\n/);
+    return lines;
   } catch (e) {
     console.error("Error reading file", e);
-  } finally {
-    return lines;
+    return null;
   }
 }
 
@@ -179,12 +179,25 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   const { values } = parseArgs(cliOptions);
 
   if (!values.input) {
-    console.error("Input file must be provided (--input or -i)");
+    console.error("Input file must be provided (--input or -i, ex. `npm run start -- --input ./inputs/input.txt`)");
   } else {
     const lines = processFile(values.input);
-    const navigationSheet = new NavigationSheet(lines);
-    const sub = new Sub((values.mode == "1" ? Phase.Kata1 : Phase.Kata2));
-    sub.navigate(navigationSheet);
-    sub.printCoordinates();
+    if (!lines) {
+      console.error("Unable to provide instructions to submarine.");
+    } else { 
+      const navigationSheet = new NavigationSheet(lines);
+
+      try {
+        if (!["1", "2"].includes(values.mode)) {
+          console.error("Invalid mode supplied, defaulting to Phase 1\n");
+        }
+
+        const sub = new Sub((values.mode == "2" ? Phase.Kata2 : Phase.Kata1));
+        sub.navigate(navigationSheet);
+        sub.printCoordinates();      
+      } catch (e) {
+        console.error("The sub ran into an issue!", e);
+      }
+    }
   }
 }

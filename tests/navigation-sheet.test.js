@@ -22,6 +22,12 @@ test('ignores blank lines and trims whitespace', () => {
   ]);
 });
 
-test.each(['backward 5', 'forward nope'])('rejects invalid input: %s', (line) => {
+test.each([
+  'backward 5',
+  'forward nope',
+  'backward forward 5',
+  'forward 1.5',
+  'forward 5 down 3',
+])('rejects invalid input: %s', (line) => {
   expect(() => new NavigationSheet([line])).toThrow('Invalid line');
 });
